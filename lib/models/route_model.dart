@@ -1,6 +1,7 @@
 class RouteModel {
   final int? id;
   final int routeId;
+  final String routeName; // Added
   final String startName;
   final String endName;
   final double totalDistance;
@@ -14,6 +15,7 @@ class RouteModel {
   RouteModel({
     this.id,
     required this.routeId,
+    required this.routeName, // Added
     required this.startName,
     required this.endName,
     required this.totalDistance,
@@ -29,6 +31,7 @@ class RouteModel {
     return {
       'id': id,
       'route_id': routeId,
+      'route_name': routeName, // Added
       'start_name': startName,
       'end_name': endName,
       'total_distance': totalDistance,
@@ -44,6 +47,7 @@ class RouteModel {
     return RouteModel(
       id: map['id'],
       routeId: map['route_id'],
+      routeName: map['route_name'] ?? 'Unnamed Route', // Added
       startName: map['start_name'] ?? '',
       endName: map['end_name'] ?? '',
       totalDistance: map['total_distance'] ?? 0.0,

@@ -20,6 +20,7 @@ class LocalRepository {
     String? province,
     String? city,
     String? date,
+    String? routeName, // Added
   }) async {
     return await DBHelper.updateSegment(
       id: id,
@@ -32,6 +33,7 @@ class LocalRepository {
       province: province,
       city: city,
       date: date,
+      routeName: routeName, // Added
     );
   }
 
@@ -44,6 +46,7 @@ class LocalRepository {
     required String province,
     required String city,
     required String date,
+    String routeName = 'Unnamed Route', // Added
   }) async {
     return await DBHelper.insertMultiPointRoute(
       waypoints: waypoints,
@@ -54,6 +57,7 @@ class LocalRepository {
       province: province,
       city: city,
       date: date,
+      routeName: routeName, // Added
     );
   }
 

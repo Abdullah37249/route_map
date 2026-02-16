@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:path/path.dart';
 
 import '../Database/db_service.dart';
-import '../models/segment_model.dart';
 
 class EditRouteViewModel {
   final int routeId;
@@ -16,6 +15,7 @@ class EditRouteViewModel {
   bool _existsOnServer = false;
 
   // Form controllers
+  String routeName = 'Unnamed Route'; // Added
   String province = 'Punjab';
   String city = 'Sialkot';
   String date = '';
@@ -43,6 +43,7 @@ class EditRouteViewModel {
   bool get existsOnServer => _existsOnServer;
 
   EditRouteViewModel({required this.route, required this.routeId}) {
+    routeName = route['route_name']?.toString() ?? 'Unnamed Route'; // Added
     date = route['date']?.toString() ?? DateTime.now().toIso8601String().split('T')[0];
     province = route['province']?.toString() ?? 'Punjab';
     city = route['city']?.toString() ?? 'Sialkot';
@@ -94,7 +95,9 @@ class EditRouteViewModel {
     _setChangesMade(true);
   }
 
-  void updateRouteInfo(String newProvince, String newCity, String newDate) {
+  // Fixed: Now accepts 4 parameters correctly
+  void updateRouteInfo(String newRouteName, String newProvince, String newCity, String newDate) {
+    routeName = newRouteName;
     province = newProvince;
     city = newCity;
     date = newDate;
@@ -121,6 +124,7 @@ class EditRouteViewModel {
         province: province,
         city: city,
         date: date,
+        routeName: routeName, // Added
       );
 
       if (success) {
@@ -129,6 +133,7 @@ class EditRouteViewModel {
         if (index != -1) {
           _segments[index] = {
             ..._segments[index],
+            'route_name': routeName, // Added
             'start_name': startName,
             'end_name': endName,
             'segment_distance': distance,
@@ -163,6 +168,7 @@ class EditRouteViewModel {
           province: province,
           city: city,
           date: date,
+          routeName: routeName, // Added
         );
 
         if (!success) {

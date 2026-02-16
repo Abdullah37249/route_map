@@ -7,7 +7,7 @@ import 'package:http/http.dart' as http;
 
 class DBHelper {
   static Database? _db;
-  static const int _currentVersion = 2; // Back to version 2 without server_synced
+  static const int _currentVersion = 3; // Incremented version for route_name column
 
   // Initialize local database
   static Future<Database> getDatabase() async {
@@ -32,6 +32,7 @@ class DBHelper {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         route_id INTEGER,
         sr_no INTEGER,
+        route_name TEXT DEFAULT 'Unnamed Route',
         start_name TEXT,
         start_lat REAL,
         start_lng REAL,
@@ -76,6 +77,7 @@ class DBHelper {
         await db.insert('map_routes', {
           'route_id': row['id'],
           'sr_no': 1,
+          'route_name': 'Route ${row['id']}',
           'start_name': 'Start Point',
           'start_lat': row['start_lat'],
           'start_lng': row['start_lng'],
@@ -95,6 +97,18 @@ class DBHelper {
 
       // Drop old table
       await db.execute('DROP TABLE map_routes_old');
+    } else if (oldVersion == 2) {
+      // Add route_name column to existing table
+      try {
+        await db.execute('ALTER TABLE map_routes ADD COLUMN route_name TEXT DEFAULT "Unnamed Route"');
+        print('Added route_name column to map_routes table');
+
+        // Update existing rows with default route names
+        await db.rawUpdate('UPDATE map_routes SET route_name = ? WHERE route_name IS NULL',
+            ['Route ' + '|| route_id']);
+      } catch (e) {
+        print('Error adding route_name column: $e');
+      }
     }
   }
 
@@ -154,6 +168,7 @@ class DBHelper {
     String province = 'Punjab',
     String city = 'Sialkot',
     required String date,
+    String routeName = 'Unnamed Route',
   }) async {
     final db = await getDatabase();
 
@@ -162,6 +177,7 @@ class DBHelper {
           .insert('map_routes', {
         'route_id': 0, // Will be updated after insert
         'sr_no': 1,
+        'route_name': routeName,
         'start_name': startName,
         'start_lat': startLat,
         'start_lng': startLng,
@@ -203,6 +219,7 @@ class DBHelper {
           province: province,
           city: city,
           date: date,
+          routeName: routeName,
         );
       }
       rethrow;
@@ -219,6 +236,7 @@ class DBHelper {
     String province = 'Punjab',
     String city = 'Sialkot',
     required String date,
+    String routeName = 'Unnamed Route',
   }) async {
     final db = await getDatabase();
 
@@ -227,6 +245,7 @@ class DBHelper {
       final firstSegmentId = await db.insert('map_routes', {
         'route_id': 0, // Temporary
         'sr_no': 1,
+        'route_name': routeName,
         'start_name': waypoints[0]['name'] ?? 'Start Point',
         'start_lat': waypoints[0]['lat'] ?? 0.0,
         'start_lng': waypoints[0]['lng'] ?? 0.0,
@@ -258,6 +277,7 @@ class DBHelper {
         await db.insert('map_routes', {
           'route_id': routeId,
           'sr_no': i + 1,
+          'route_name': routeName,
           'start_name': waypoints[i]['name'] ?? 'Point ${i + 1}',
           'start_lat': waypoints[i]['lat'] ?? 0.0,
           'start_lng': waypoints[i]['lng'] ?? 0.0,
@@ -290,6 +310,7 @@ class DBHelper {
           province: province,
           city: city,
           date: date,
+          routeName: routeName,
         );
       }
       rethrow;
@@ -307,6 +328,7 @@ class DBHelper {
     String province = 'Punjab',
     String city = 'Sialkot',
     required String date,
+    String routeName = 'Unnamed Route',
   }) async {
     return await insertSimpleRoute(
       startName: 'Start Point',
@@ -320,6 +342,7 @@ class DBHelper {
       province: province,
       city: city,
       date: date,
+      routeName: routeName,
     );
   }
 
@@ -346,6 +369,7 @@ class DBHelper {
           result.add({
             'route_id': routeId,
             'segments_count': segments.length,
+            'route_name': firstSegment['route_name'] ?? 'Unnamed Route',
             'start_name': firstSegment['start_name'],
             'end_name': segments.last['end_name'],
             'total_distance': firstSegment['total_distance'],
@@ -396,10 +420,12 @@ class DBHelper {
   static Map<String, dynamic> _prepareServerData(Map<String, dynamic> segment) {
     final startName = segment['start_name']?.toString() ?? 'Unknown Start';
     final endName = segment['end_name']?.toString() ?? 'Unknown End';
+    final routeName = segment['route_name']?.toString() ?? 'Unnamed Route';
 
     // Get shorter names for server
     final shortStartName = _getShortLocation(startName);
     final shortEndName = _getShortLocation(endName);
+    final shortRouteName = _truncateForServer(routeName);
 
     // Truncate to server column limits
     final truncatedStartName = _truncateForServer(shortStartName);
@@ -408,6 +434,7 @@ class DBHelper {
     return {
       'route_id': segment['route_id'] ?? 0,
       'sr_no': segment['sr_no'] ?? 1,
+      'route_name': shortRouteName,
       'start_name': truncatedStartName,
       'start_lat': segment['start_lat'] ?? 0.0,
       'start_lng': segment['start_lng'] ?? 0.0,
@@ -435,6 +462,7 @@ class DBHelper {
       final serverData = _prepareServerData(data);
 
       print('Sending to server (short names):');
+      print('Route Name: ${serverData['route_name']}');
       print('Start: ${serverData['start_name']}');
       print('End: ${serverData['end_name']}');
 
@@ -605,6 +633,7 @@ class DBHelper {
     String? province,
     String? city,
     String? date,
+    String? routeName,
   }) async {
     final db = await getDatabase();
 
@@ -623,6 +652,7 @@ class DBHelper {
       if (province != null) updates['province'] = province;
       if (city != null) updates['city'] = city;
       if (date != null) updates['date'] = date;
+      if (routeName != null) updates['route_name'] = routeName;
 
       updates['created_at'] = DateTime.now().toIso8601String();
 
@@ -744,6 +774,7 @@ class DBHelper {
                   'id': 0, // Placeholder
                   'route_id': routeId,
                   'sr_no': srNo,
+                  'route_name': item['route_name']?.toString() ?? 'Unnamed Route',
                   'start_name': item['start_name']?.toString() ?? 'Unknown Start',
                   'start_lat': (item['start_lat'] is String)
                       ? double.tryParse(item['start_lat'].toString()) ?? 0.0
@@ -790,6 +821,7 @@ class DBHelper {
                 routes.add({
                   'route_id': routeId,
                   'segments_count': segments.length,
+                  'route_name': firstSegment['route_name'],
                   'start_name': firstSegment['start_name'],
                   'end_name': lastSegment['end_name'],
                   'total_distance': firstSegment['total_distance'],
@@ -992,6 +1024,7 @@ class DBHelper {
     String province = 'Punjab',
     String city = 'Sialkot',
     required String date,
+    String routeName = 'Unnamed Route',
   }) async {
     final db = await getDatabase();
 
@@ -1008,6 +1041,7 @@ class DBHelper {
         await db.insert('map_routes', {
           'route_id': routeId, // Keep the original route ID
           'sr_no': i + 1,
+          'route_name': routeName,
           'start_name': waypoints[i]['name'] ?? 'Point ${i + 1}',
           'start_lat': waypoints[i]['lat'] ?? 0.0,
           'start_lng': waypoints[i]['lng'] ?? 0.0,

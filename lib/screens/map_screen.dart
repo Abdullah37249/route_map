@@ -548,6 +548,7 @@ class _MapScreenState extends State<MapScreen> {
               TileLayer(
                 urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                 userAgentPackageName: 'com.example.map_routing',
+                // subdomains کو remove کریں
               ),
               if (startPoint != null)
                 MarkerLayer(

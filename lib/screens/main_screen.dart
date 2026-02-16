@@ -1,59 +1,15 @@
-// import 'package:flutter/material.dart';
-// import 'package:routing_0sm/screens/route_list_screen.dart';
-//
-// import 'map_screen.dart';
-// import 'multi_point_map_screen.dart';
-// import 'server_routes_screen.dart';
-//
-// class MainScreen extends StatelessWidget {
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(title: Text('OSM Route Planner')),
-//       body: Center(
-//         child: Column(
-//           mainAxisAlignment: MainAxisAlignment.center,
-//           children: [
-//             ElevatedButton(
-//               child: Text('Create Multi-Point Route'),
-//               onPressed: () {
-//                 Navigator.push(
-//                   context,
-//                   MaterialPageRoute(builder: (_) => MultiPointMapScreen()),
-//                 );
-//               },
-//             ),
-//             SizedBox(height: 20),
-//             ElevatedButton(
-//               child: Text('View Saved Routes'),
-//               onPressed: () {
-//                 Navigator.push(
-//                   context,
-//                   MaterialPageRoute(builder: (_) => RoutesListScreen()),
-//                 );
-//               },
-//             ),
-//             SizedBox(height: 20),
-//             ElevatedButton(
-//               child: Text('View Server Routes (GET)'),
-//               onPressed: () {
-//                 Navigator.push(
-//                   context,
-//                   MaterialPageRoute(builder: (_) => ServerRoutesScreen()),
-//                 );
-//               },
-//             ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-// }
+// file: lib/screens/main_screen.dart
 import 'package:flutter/material.dart';
 import 'package:routing_0sm/screens/route_list_screen.dart';
-import 'map_screen.dart';
-import 'multi_point_map_screen.dart';
-import 'server_routes_screen.dart';
+import '../Database/db_service.dart';
+import '../geofancing/real_time_navigation_screen.dart';
+import '../geofancing/route_selection_screen.dart';
+import '../geofancing/route_tracking_screen.dart';
+
+import '../screens/map_screen.dart';
+import '../screens/multi_point_map_screen.dart';
+import '../screens/server_routes_screen.dart';
+
 
 class MainScreen extends StatelessWidget {
   @override
@@ -61,7 +17,7 @@ class MainScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: Text('OSM Route Planner', style: TextStyle(color: Colors.white),),
+        title: Text('OSM Route Planner', style: TextStyle(color: Colors.white)),
         centerTitle: true,
         elevation: 0,
         flexibleSpace: Container(
@@ -80,16 +36,31 @@ class MainScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Main Actions
-              Text(
-                'Quick Actions',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey[800],
+              // Header
+              Container(
+                margin: EdgeInsets.only(bottom: 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Route Planner',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey[800],
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      'Plan, save, and track your routes',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              SizedBox(height: 12),
 
               // Create Multi-Point Route Card
               _buildActionCard(
@@ -108,17 +79,21 @@ class MainScreen extends StatelessWidget {
 
               SizedBox(height: 12),
 
-              // View Saved Routes Card
+              // Real-Time Navigation Card
               _buildActionCard(
                 context: context,
-                icon: Icons.bookmark,
-                title: 'View Saved Routes',
-                subtitle: 'Access your locally saved routes',
-                gradientColors: [Colors.orange.shade400, Colors.orange.shade600],
+                icon: Icons.navigation,
+                title: 'Real-Time Navigation',
+                subtitle: 'Turn-by-turn navigation with geofencing',
+                gradientColors: [Colors.purple.shade400, Colors.purple.shade600],
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => RoutesListScreen()),
+                    MaterialPageRoute(
+                      builder: (_) => const RouteSelectionScreen(
+                        isForNavigation: true,
+                      ),
+                    ),
                   );
                 },
               ),
@@ -131,7 +106,7 @@ class MainScreen extends StatelessWidget {
                 icon: Icons.cloud,
                 title: 'View Server Routes',
                 subtitle: 'Sync and manage server routes',
-                gradientColors: [Colors.purple.shade400, Colors.purple.shade600],
+                gradientColors: [Colors.teal.shade400, Colors.teal.shade600],
                 onTap: () {
                   Navigator.push(
                     context,
@@ -146,6 +121,265 @@ class MainScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _showRouteSelectionDialogForNavigation(BuildContext context) async {
+    try {
+      final routes = await DBHelper.getRoutes();
+
+      if (routes.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('No saved routes found'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        return;
+      }
+
+      showDialog(
+        context: context,
+        builder: (context) => Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Container(
+            constraints: BoxConstraints(maxHeight: 400),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Header
+                Container(
+                  padding: EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Colors.purple.shade600, Colors.purple.shade400],
+                    ),
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(20),
+                      topRight: Radius.circular(20),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.navigation, color: Colors.white, size: 28),
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Select Route for Navigation',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Routes List
+                // ✅ FIX: Removed shrinkWrap when using Expanded
+                Expanded(
+                  child: ListView.builder(
+                    padding: EdgeInsets.symmetric(vertical: 8),
+                    itemCount: routes.length,
+                    itemBuilder: (context, index) {
+                      final route = routes[index];
+                      final routeId = route['route_id'] as int?;
+                      final startName = route['start_name']?.toString() ?? 'Unknown';
+                      final endName = route['end_name']?.toString() ?? 'Unknown';
+                      final distance = route['total_distance']?.toString() ?? '0';
+                      final duration = route['total_duration']?.toString() ?? '0 min';
+
+                      return Container(
+                        margin: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey.shade200),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 4,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: ListTile(
+                          leading: Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [Colors.purple.shade400, Colors.purple.shade600],
+                              ),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Center(
+                              child: Text(
+                                '${index + 1}',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                          title: Text(
+                            'Route $routeId',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '$startName to $endName',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  Icon(Icons.straighten, size: 12, color: Colors.blue),
+                                  SizedBox(width: 4),
+                                  Text('$distance km', style: TextStyle(fontSize: 11)),
+                                  SizedBox(width: 12),
+                                  Icon(Icons.access_time, size: 12, color: Colors.orange),
+                                  SizedBox(width: 4),
+                                  Text(duration, style: TextStyle(fontSize: 11)),
+                                ],
+                              ),
+                            ],
+                          ),
+                          trailing: Icon(Icons.arrow_forward_ios, size: 16, color: Colors.purple),
+                          onTap: () {
+                            Navigator.pop(context);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => RealTimeNavigationScreen(
+                                  routeId: routeId!,
+                                  routeName: 'Route $routeId Navigation',
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      );
+                    },
+                  ),
+                ),
+
+                // Footer
+                Container(
+                  padding: EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade50,
+                    borderRadius: BorderRadius.only(
+                      bottomLeft: Radius.circular(20),
+                      bottomRight: Radius.circular(20),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: Text('Cancel'),
+                          style: OutlinedButton.styleFrom(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error loading routes: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _showRouteSelectionDialog(BuildContext context) async {
+    try {
+      final routes = await DBHelper.getRoutes();
+
+      if (routes.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('No saved routes found'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        return;
+      }
+
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('Select Route to Track'),
+          content: Container(
+            width: double.maxFinite,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: routes.length,
+              itemBuilder: (context, index) {
+                final route = routes[index];
+                final routeId = route['route_id'] as int?;
+                final startName = route['start_name']?.toString() ?? 'Unknown';
+                final endName = route['end_name']?.toString() ?? 'Unknown';
+
+                return ListTile(
+                  leading: Icon(Icons.route, color: Colors.orange),
+                  title: Text('Route $routeId'),
+                  subtitle: Text('$startName to $endName'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => RouteTrackingScreen(
+                          routeId: routeId!,
+                          routeName: 'Route $routeId',
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Cancel'),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error loading routes: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   Widget _buildActionCard({
@@ -221,6 +455,42 @@ class MainScreen extends StatelessWidget {
                 ),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickActionButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(10),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          padding: EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey.shade300),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Column(
+            children: [
+              Icon(icon, size: 24, color: Colors.blue.shade700),
+              SizedBox(height: 8),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.grey.shade700,
+                ),
+              ),
+            ],
           ),
         ),
       ),

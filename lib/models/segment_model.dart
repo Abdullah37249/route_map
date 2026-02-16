@@ -2,6 +2,7 @@ class SegmentModel {
   final int? id;
   final int routeId;
   final int srNo;
+  final String routeName; // Added
   final String startName;
   final double startLat;
   final double startLng;
@@ -20,6 +21,7 @@ class SegmentModel {
     this.id,
     required this.routeId,
     required this.srNo,
+    required this.routeName, // Added
     required this.startName,
     required this.startLat,
     required this.startLng,
@@ -40,6 +42,7 @@ class SegmentModel {
       'id': id,
       'route_id': routeId,
       'sr_no': srNo,
+      'route_name': routeName, // Added
       'start_name': startName,
       'start_lat': startLat,
       'start_lng': startLng,
@@ -62,6 +65,7 @@ class SegmentModel {
       id: map['id'],
       routeId: map['route_id'] ?? 0,
       srNo: map['sr_no'] ?? 0,
+      routeName: map['route_name'] ?? 'Unnamed Route', // Added
       startName: map['start_name'] ?? '',
       startLat: map['start_lat'] ?? 0.0,
       startLng: map['start_lng'] ?? 0.0,
