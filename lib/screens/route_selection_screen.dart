@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:routing_0sm/geofencing/real_time_navigation_screen.dart';
-import 'package:routing_0sm/geofencing/route_tracking_screen.dart';
+import 'package:routing_0sm/screens/real_time_navigation_screen.dart';
+import 'package:routing_0sm/screens/route_tracking_screen.dart';
 import '../Database/db_service.dart';
 
 

@@ -2,8 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 import '../Database/db_service.dart';
-import '../screens/multi_point_map_screen.dart';
-import 'geofencing_service.dart';
+import 'multi_point_map_screen.dart';
+import '../services/geofencing_service.dart';
 
 
 class RouteTrackingScreen extends StatefulWidget {

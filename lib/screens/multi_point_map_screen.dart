@@ -8,8 +8,8 @@ import 'package:flutter_typeahead/flutter_typeahead.dart';
 
 
 
-import '../geofencing/geofencing_service.dart';
-import '../geofencing/real_time_navigation_screen.dart';
+import '../services/geofencing_service.dart';
+import 'real_time_navigation_screen.dart';
 import 'save_multi_route_screen.dart';
 import '../Database/db_service.dart';
 

@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
 
-import 'package:routing_0sm/geofencing/routes_add_shop_model.dart';
+import 'package:routing_0sm/models/routes_add_shop_model.dart';
 
 class ShopService {
   // APNA BASE URL

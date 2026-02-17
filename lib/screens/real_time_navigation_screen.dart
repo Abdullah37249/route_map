@@ -8,13 +8,13 @@ import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 
-import 'package:routing_0sm/geofencing/routes_add_shop_model.dart';
-import 'package:routing_0sm/geofencing/shop_service.dart';
+import 'package:routing_0sm/models/routes_add_shop_model.dart';
+import 'package:routing_0sm/services/shop_service.dart';
 import 'dart:convert';
 
 import '../Database/db_service.dart';
 
-import 'geofencing_service.dart';
+import '../services/geofencing_service.dart';
 import 'navigation_theme.dart';
 import 'off_route_address_screen.dart';
 // 🆕 IMPORT SHOP MODEL
