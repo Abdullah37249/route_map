@@ -215,4 +215,5 @@ class RouteDurationTracker {
       'formatted_total': formattedTotalDuration,
     };
   }
+
 }
